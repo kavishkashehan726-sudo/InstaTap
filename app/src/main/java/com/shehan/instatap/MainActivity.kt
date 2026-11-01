@@ -11,6 +11,7 @@ import android.text.TextUtils
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 
@@ -21,6 +22,8 @@ class MainActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var intervalInput: EditText
     private lateinit var autoStopInput: EditText
+    private lateinit var modeGroup: RadioGroup
+    private lateinit var buttonTextsInput: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,6 +33,11 @@ class MainActivity : Activity() {
         status = findViewById(R.id.accessibility_status)
         intervalInput = findViewById(R.id.interval_input)
         autoStopInput = findViewById(R.id.auto_stop_input)
+        modeGroup = findViewById(R.id.mode_group)
+        buttonTextsInput = findViewById(R.id.button_texts_input)
+
+        modeGroup.check(if (prefs.waitForButton) R.id.mode_wait else R.id.mode_continuous)
+        buttonTextsInput.setText(prefs.buttonTexts)
 
         intervalInput.setText(prefs.intervalMs.toString())
         autoStopInput.setText(prefs.autoStopMinutes.toString())
@@ -71,10 +79,13 @@ class MainActivity : Activity() {
     }
 
     private fun saveSettings() {
+        prefs.waitForButton = modeGroup.checkedRadioButtonId != R.id.mode_continuous
+        prefs.buttonTexts = buttonTextsInput.text.toString()
         intervalInput.text.toString().toLongOrNull()?.let { prefs.intervalMs = it }
         autoStopInput.text.toString().toIntOrNull()?.let { prefs.autoStopMinutes = it }
         intervalInput.setText(prefs.intervalMs.toString())
         autoStopInput.setText(prefs.autoStopMinutes.toString())
+        TapService.instance?.onSettingsChanged()
     }
 
     private fun openAccessibilitySettings() {

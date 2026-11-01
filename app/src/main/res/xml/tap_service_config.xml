@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Only gesture dispatch is requested. No window content is read (NFR4) and
-     no accessibility events are subscribed to, which keeps CPU use minimal (NFR2). -->
+<!-- Event types are set at runtime: none while idle (saves battery, NFR2), window changes only
+     while "Wait for hire" is armed. Window content is read in memory only to find the button
+     text the user configured; nothing is stored or sent anywhere (NFR4).
+     Key filtering is used only to stop on Volume Down while InstaTap is active. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagRequestFilterKeyEvents"
     android:canPerformGestures="true"
-    android:canRetrieveWindowContent="false"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="true"
     android:description="@string/service_description"
     android:notificationTimeout="0" />

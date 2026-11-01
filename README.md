@@ -5,7 +5,8 @@ A lightweight Android utility that taps one point on the screen repeatedly, usin
 
 - Package: `com.shehan.instatap`
 - Android 7.0 (API 24) or newer
-- Kotlin, no third-party libraries, no internet permission. Nothing on screen is read or stored.
+- Kotlin, no third-party libraries, no internet permission. Screen text is only checked on the
+  phone to find the configured button; nothing is stored or sent.
 
 ## Getting the APK
 
@@ -40,15 +41,25 @@ Scan apps with Play Protect* for the install and turn it back on afterwards.
 
 ## Using it
 
-- Drag the red crosshair so its centre is on the button you want tapped.
-- Press **Start**. The crosshair fades and becomes click-through while tapping runs.
-- Press **Stop** to stop. Tapping also stops when the screen turns off, and after the auto-stop timer.
-- Drag the control bar by its ⠿ handle. **✕** hides the overlay; **Show overlay** in the app brings it back.
+InstaTap has two modes, picked in the app under **Settings**.
+
+**Wait for hire (default).** Press **Start** on the floating bar; it turns orange (*Waiting…*).
+Nothing is tapped while waiting, so the phone works normally. The moment a button whose label exactly
+matches the configured text (default `Accept`, case-insensitive, several allowed with commas) appears
+in any app, InstaTap taps it once and stops.
+
+**Continuous.** Drag the red crosshair onto the spot, press **Start**, and it taps that point over
+and over. While it runs the screen may not respond to your fingers.
+
+Either mode stops with **Volume Down**, the floating Stop button, screen off, or the auto-stop timer.
+Drag the control bar by its ⠿ handle. **✕** hides the overlay; **Show overlay** in the app brings it back.
 
 ## Settings (in the app)
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
+| Mode | Wait for hire | Tap the named button once, or tap the target continuously |
+| Button text | Accept | Exact button label(s) to look for, comma-separated |
 | Extra delay between taps | 0 ms | 0 taps as fast as Android accepts gestures |
 | Auto-stop after | 60 min | 0 never stops automatically |
 

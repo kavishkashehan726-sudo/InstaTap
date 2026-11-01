@@ -11,7 +11,8 @@ import android.widget.Button
 import android.widget.ImageView
 
 /**
- * Draws the two floating windows: the draggable crosshair target and the Start/Stop panel.
+ * Draws the two floating windows: the draggable crosshair target (continuous mode only) and
+ * the Start/Stop panel.
  *
  * Both use TYPE_ACCESSIBILITY_OVERLAY, which the accessibility service may draw without the
  * separate "display over other apps" permission. While tapping, the target window is made
@@ -69,13 +70,14 @@ class OverlayController(
             .setOnTouchListener(DragListener(pp, pv) { x, y -> prefs.savePanelPos(x, y) })
         val btn = pv.findViewById<Button>(R.id.panel_toggle)
         btn.setOnClickListener {
-            if (service.isRunning) service.stopTapping() else startFromTarget()
+            if (service.isActive) service.stop() else startFromTarget()
         }
         pv.findViewById<View>(R.id.panel_close).setOnClickListener { service.hideOverlay() }
         wm.addView(pv, pp)
         panel = pv
         panelParams = pp
         toggle = btn
+        refresh()
     }
 
     fun remove() {
@@ -88,20 +90,36 @@ class OverlayController(
         toggle = null
     }
 
-    fun onRunningChanged(running: Boolean) {
+    /** Updates the button and target to match the service state and the selected mode. */
+    fun refresh() {
+        val state = service.state
         toggle?.apply {
-            setText(if (running) R.string.stop else R.string.start)
+            setText(
+                when (state) {
+                    TapService.State.IDLE -> R.string.start
+                    TapService.State.WAITING -> R.string.waiting
+                    TapService.State.TAPPING -> R.string.stop
+                }
+            )
             backgroundTintList = android.content.res.ColorStateList.valueOf(
-                if (running) COLOR_STOP else COLOR_START
+                when (state) {
+                    TapService.State.IDLE -> COLOR_START
+                    TapService.State.WAITING -> COLOR_WAITING
+                    TapService.State.TAPPING -> COLOR_STOP
+                }
             )
         }
         val tv = target ?: return
         val tp = targetParams ?: return
-        tv.alpha = if (running) RUNNING_ALPHA else IDLE_ALPHA
-        tp.flags = if (running) {
-            tp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-        } else {
+        // The target is only used by continuous mode; hide it (and let touches through) otherwise.
+        val hidden = prefs.waitForButton
+        val touchable = !hidden && state == TapService.State.IDLE
+        tv.visibility = if (hidden) View.GONE else View.VISIBLE
+        tv.alpha = if (state == TapService.State.TAPPING) RUNNING_ALPHA else IDLE_ALPHA
+        tp.flags = if (touchable) {
             tp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+        } else {
+            tp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         }
         wm.updateViewLayout(tv, tp)
     }
@@ -110,7 +128,7 @@ class OverlayController(
         val tv = target ?: return
         val loc = IntArray(2)
         tv.getLocationOnScreen(loc)
-        service.startTapping(loc[0] + tv.width / 2f, loc[1] + tv.height / 2f)
+        service.start(loc[0] + tv.width / 2f, loc[1] + tv.height / 2f)
     }
 
     private fun baseParams() = WindowManager.LayoutParams(
@@ -135,7 +153,7 @@ class OverlayController(
         private var downRawY = 0f
 
         override fun onTouch(v: View, e: MotionEvent): Boolean {
-            if (window === target && service.isRunning) return false
+            if (window === target && service.isActive) return false
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     startX = params.x
@@ -161,5 +179,6 @@ class OverlayController(
         private const val PANEL_ALPHA = 0.85f
         private const val COLOR_START = 0xFF43A047.toInt()
         private const val COLOR_STOP = 0xFFE53935.toInt()
+        private const val COLOR_WAITING = 0xFFFB8C00.toInt()
     }
 }

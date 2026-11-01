@@ -17,7 +17,7 @@ android {
         targetSdk = 35
         // CI passes the run number so every build can install over the previous one.
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
-        versionName = System.getenv("INSTATAP_VERSION_NAME") ?: "0.1.0"
+        versionName = System.getenv("INSTATAP_VERSION_NAME") ?: "0.2.0"
     }
 
     signingConfigs {
