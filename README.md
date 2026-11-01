@@ -1,5 +1,7 @@
 # InstaTap
 
+Currently working on this project.
+
 A lightweight Android utility that taps one point on the screen repeatedly, using the
 `AccessibilityService` gesture API and a small floating overlay.
 
