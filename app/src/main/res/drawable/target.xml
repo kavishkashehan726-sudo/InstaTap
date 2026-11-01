@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crosshair target. The tap lands at the exact centre. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="56"
+    android:viewportHeight="56">
+    <path android:strokeColor="#E53935" android:strokeWidth="3"
+        android:pathData="M28,4a24,24 0,1 1,0 48a24,24 0,1 1,0 -48z" />
+    <path android:strokeColor="#E53935" android:strokeWidth="2"
+        android:pathData="M28,10L28,22M28,34L28,46M10,28L22,28M34,28L46,28" />
+    <path android:fillColor="#E53935" android:pathData="M28,25a3,3 0,1 1,0 6a3,3 0,1 1,0 -6z" />
+</vector>
