@@ -22,9 +22,17 @@ jobs:
       - name: Build debug APK
         run: ./gradlew --no-daemon assembleDebug
 
+      - name: Name APK after app and version
+        id: apk
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          NAME="InstaTap-v${VERSION}"
+          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/${NAME}.apk"
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: InstaTap-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: ${{ steps.apk.outputs.name }}
+          path: app/build/outputs/apk/debug/${{ steps.apk.outputs.name }}.apk
           if-no-files-found: error
