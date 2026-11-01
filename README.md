@@ -9,14 +9,27 @@ A lightweight Android utility that taps one point on the screen repeatedly, usin
 
 ## Getting the APK
 
-Every push builds a debug APK on GitHub Actions.
+**Releases (recommended).** Open **Releases → Draft a new release**, create a tag like `v0.2.0`, and
+publish. GitHub Actions builds a signed APK named `InstaTap-v0.2.0.apk` and attaches it to the release
+within a few minutes. The version name comes from the tag.
 
-1. Open the repo's **Actions** tab and pick the latest green **Build APK** run.
-2. Download the **InstaTap-v…** artifact under *Artifacts* and unzip it to get `InstaTap-v<version>.apk`.
-3. Install it. Because InstaTap uses an accessibility service, Google Play Protect may block installs from a
-   browser or file manager ("App blocked to protect your device"). Either install from a computer with
-   `adb install InstaTap-v<version>.apk`, or turn off *Play Store → profile → Play Protect → ⚙️ →
-   Scan apps with Play Protect* for the install and turn it back on afterwards.
+**Any push.** Every push also builds an APK under **Actions → Build APK → Artifacts** (a zip containing
+the APK). It's release-signed when the signing secrets are set, otherwise debug-signed (`-debug.apk`).
+
+Release builds are signed with the same key every time, so a new version installs as an update. Moving
+from a debug build to a release build needs one uninstall first.
+
+### Signing secrets
+
+The workflow reads four repository secrets: `SIGNING_KEYSTORE_BASE64` (the `.jks` keystore, base64),
+`SIGNING_STORE_PASSWORD`, `SIGNING_KEY_ALIAS` and `SIGNING_KEY_PASSWORD`. Never commit the keystore.
+
+### Installing
+
+Because InstaTap uses an accessibility service, Google Play Protect may block installs from a
+browser or file manager ("App blocked to protect your device"). Either install from a computer with
+`adb install InstaTap-v<version>.apk`, or turn off *Play Store → profile → Play Protect → ⚙️ →
+Scan apps with Play Protect* for the install and turn it back on afterwards.
 
 ## First-time setup on the phone
 
