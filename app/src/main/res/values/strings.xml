@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">InstaTap</string>
     <string name="service_label">InstaTap tapper</string>
-    <string name="service_description">Lets InstaTap show its floating target and tap the point you choose. InstaTap does not read or record anything on your screen.</string>
+    <string name="service_description">Lets InstaTap show its floating controls, find the button you name (for example Accept) and tap it, or tap a point you choose. Screen text is only checked on the phone to find that button. Nothing is stored or sent anywhere.</string>
 
     <string name="step_accessibility">1. Turn on the InstaTap accessibility service</string>
     <string name="step_accessibility_help">Settings opens. Find InstaTap under Installed apps or Downloaded services and turn it on.</string>
@@ -13,6 +13,10 @@
     <string name="status_off">✗ Accessibility service is off</string>
 
     <string name="step_settings">2. Settings</string>
+    <string name="mode_label">Mode</string>
+    <string name="mode_wait">Wait for hire: tap the button once when it appears, then stop</string>
+    <string name="mode_continuous">Continuous: keep tapping the red target</string>
+    <string name="button_texts_label">Button text to tap (exact label, separate several with commas)</string>
     <string name="interval_label">Extra delay between taps (ms). 0 = as fast as possible</string>
     <string name="auto_stop_label">Auto-stop after (minutes). 0 = never</string>
     <string name="save">Save</string>
@@ -20,11 +24,15 @@
 
     <string name="step_overlay">3. Show the floating controls</string>
     <string name="show_overlay">Show overlay</string>
-    <string name="overlay_help">Drag the red target onto the button you want tapped, then press Start. Drag the control bar by its handle to move it.</string>
+    <string name="overlay_help">Press Start on the floating bar. In Wait for hire mode it turns orange and waits; the moment the button appears it is tapped and InstaTap stops. In Continuous mode, first drag the red target onto the spot to tap. Press Volume Down at any time to stop. Drag the bar by its handle to move it.</string>
 
     <string name="start">Start</string>
     <string name="stop">Stop</string>
     <string name="close">✕</string>
     <string name="handle">⠿</string>
+    <string name="waiting">Waiting…</string>
     <string name="auto_stopped">InstaTap stopped automatically</string>
+    <string name="stopped_by_volume">InstaTap stopped</string>
+    <string name="hire_accepted">InstaTap: button tapped, stopped</string>
+    <string name="no_button_text">Set the button text in InstaTap first</string>
 </resources>
