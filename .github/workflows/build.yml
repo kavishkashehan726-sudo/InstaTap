@@ -5,10 +5,17 @@ on:
     branches: ["**"]
   pull_request:
   workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write # needed to attach the APK to a GitHub Release
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.SIGNING_KEYSTORE_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -19,20 +26,52 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
-
-      - name: Name APK after app and version
-        id: apk
+      - name: Work out version
+        id: version
         run: |
-          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
-          NAME="InstaTap-v${VERSION}"
-          mv app/build/outputs/apk/debug/app-debug.apk "app/build/outputs/apk/debug/${NAME}.apk"
-          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION=$(grep -oP 'System.getenv\("INSTATAP_VERSION_NAME"\) \?: "\K[^"]+' app/build.gradle.kts)
+          fi
+          echo "INSTATAP_VERSION_NAME=${VERSION}" >> "$GITHUB_ENV"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up release signing key
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          SIGNING_KEYSTORE_BASE64: ${{ secrets.SIGNING_KEYSTORE_BASE64 }}
+        run: |
+          echo "$SIGNING_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "SIGNING_KEYSTORE_PATH=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed release APK
+        if: env.HAS_KEYSTORE == 'true'
+        env:
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          ./gradlew --no-daemon assembleRelease
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk "out/InstaTap-v${INSTATAP_VERSION_NAME}.apk"
+
+      - name: Build debug APK (no signing key configured)
+        if: env.HAS_KEYSTORE != 'true'
+        run: |
+          ./gradlew --no-daemon assembleDebug
+          mkdir -p out
+          cp app/build/outputs/apk/debug/app-debug.apk "out/InstaTap-v${INSTATAP_VERSION_NAME}-debug.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.apk.outputs.name }}
-          path: app/build/outputs/apk/debug/${{ steps.apk.outputs.name }}.apk
+          name: InstaTap-v${{ steps.version.outputs.version }}
+          path: out/*.apk
           if-no-files-found: error
+
+      - name: Attach APK to the GitHub Release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" out/*.apk --clobber
