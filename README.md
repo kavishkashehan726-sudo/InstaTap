@@ -1,7 +1,5 @@
 # InstaTap
 
-Currently working on this project.
-
 A lightweight Android utility that taps one point on the screen repeatedly, using the
 `AccessibilityService` gesture API and a small floating overlay.
 
@@ -14,8 +12,11 @@ A lightweight Android utility that taps one point on the screen repeatedly, usin
 Every push builds a debug APK on GitHub Actions.
 
 1. Open the repo's **Actions** tab and pick the latest green **Build APK** run.
-2. Download **InstaTap-debug-apk** under *Artifacts* and unzip it to get `app-debug.apk`.
-3. Copy it to the phone and open it. Allow "Install unknown apps" for your file manager or browser when asked.
+2. Download the **InstaTap-v…** artifact under *Artifacts* and unzip it to get `InstaTap-v<version>.apk`.
+3. Install it. Because InstaTap uses an accessibility service, Google Play Protect may block installs from a
+   browser or file manager ("App blocked to protect your device"). Either install from a computer with
+   `adb install InstaTap-v<version>.apk`, or turn off *Play Store → profile → Play Protect → ⚙️ →
+   Scan apps with Play Protect* for the install and turn it back on afterwards.
 
 ## First-time setup on the phone
 
