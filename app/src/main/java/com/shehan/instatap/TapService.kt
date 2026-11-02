@@ -11,10 +11,12 @@ import android.graphics.Rect
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.Toast
+import java.text.Normalizer
 
 /**
  * Accessibility service that owns the floating overlay and does the tapping. Two modes:
@@ -47,7 +49,9 @@ class TapService : AccessibilityService() {
 
     // Wait-for-hire mode
     private var buttonTexts: List<String> = emptyList()
+    private var normalisedTexts: Set<String> = emptySet()
     private var scanPending = false
+    private var lastFullScanAt = 0L
 
     private val tapRunnable = Runnable { dispatchTap() }
     private val scanRunnable = Runnable {
@@ -87,10 +91,13 @@ class TapService : AccessibilityService() {
         if (state != State.WAITING || event == null) return
         if (event.packageName == packageName) return
         // Coalesce bursts of events into one scan per main-loop pass.
-        if (!scanPending) {
-            scanPending = true
-            handler.post(scanRunnable)
-        }
+        scheduleScan(0)
+    }
+
+    private fun scheduleScan(delayMs: Long) {
+        if (scanPending) return
+        scanPending = true
+        handler.postDelayed(scanRunnable, delayMs)
     }
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
@@ -166,6 +173,8 @@ class TapService : AccessibilityService() {
 
     private fun startWaiting() {
         buttonTexts = prefs.buttonTextList()
+        normalisedTexts = buttonTexts.map { normalise(it) }.filter { it.isNotEmpty() }.toSet()
+        lastFullScanAt = 0L
         if (buttonTexts.isEmpty()) {
             toast(R.string.no_button_text)
             return
@@ -204,19 +213,38 @@ class TapService : AccessibilityService() {
     }
 
     private fun findButton(root: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        // Fast path: the framework's text search runs inside the app being searched.
         for (text in buttonTexts) {
             val candidates = root.findAccessibilityNodeInfosByText(text) ?: continue
-            candidates.firstOrNull { node ->
-                node.isVisibleToUser && (labelMatches(node.text, text) ||
-                    labelMatches(node.contentDescription, text))
-            }?.let { return it }
+            candidates.firstOrNull { isMatch(it) }?.let { return it }
+        }
+        // Slow path: walk the tree ourselves, comparing normalised labels. This catches labels
+        // the fast path misses, e.g. Sinhala text containing invisible joiner characters.
+        // Throttled because content-change events can arrive many times per second.
+        val now = SystemClock.uptimeMillis()
+        if (now - lastFullScanAt < FULL_SCAN_INTERVAL_MS) {
+            scheduleScan(FULL_SCAN_INTERVAL_MS)
+            return null
+        }
+        lastFullScanAt = now
+        val queue = ArrayDeque<AccessibilityNodeInfo>()
+        queue.add(root)
+        var visited = 0
+        while (queue.isNotEmpty() && visited < MAX_NODES) {
+            val node = queue.removeFirst()
+            visited++
+            if (isMatch(node)) return node
+            for (i in 0 until node.childCount) node.getChild(i)?.let { queue.add(it) }
         }
         return null
     }
 
-    /** Whole-label match, ignoring case, so "Accept" does not match "Accepted rides". */
-    private fun labelMatches(label: CharSequence?, wanted: String) =
-        label != null && label.toString().trim().equals(wanted, ignoreCase = true)
+    private fun isMatch(node: AccessibilityNodeInfo): Boolean {
+        if (!node.isVisibleToUser) return false
+        val text = normalise(node.text)
+        val desc = normalise(node.contentDescription)
+        return normalisedTexts.any { it == text || it == desc }
+    }
 
     /** Clicks the node (or its nearest clickable parent); falls back to a tap on its centre. */
     private fun clickNode(node: AccessibilityNodeInfo): Boolean {
@@ -268,6 +296,21 @@ class TapService : AccessibilityService() {
     companion object {
         private const val TAP_DURATION_MS = 10L
         private const val RETRY_DELAY_MS = 100L
+        private const val FULL_SCAN_INTERVAL_MS = 150L
+        private const val MAX_NODES = 3000
+
+        private val INVISIBLE_CHARS = Regex("[\\u200B-\\u200D\\u2060\\uFEFF]")
+        private val WHITESPACE = Regex("\\s+")
+
+        /**
+         * Whole-label comparison form: Unicode-normalised, invisible joiners removed, whitespace
+         * collapsed, lower-cased. Whole-label so "Accept" does not match "Accepted rides".
+         */
+        fun normalise(label: CharSequence?): String {
+            if (label.isNullOrEmpty()) return ""
+            val nfc = Normalizer.normalize(label, Normalizer.Form.NFC)
+            return nfc.replace(INVISIBLE_CHARS, "").replace(WHITESPACE, " ").trim().lowercase()
+        }
 
         /** The connected service, or null when accessibility access is off. */
         @Volatile
