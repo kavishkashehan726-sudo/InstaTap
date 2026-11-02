@@ -45,7 +45,7 @@ InstaTap has two modes, picked in the app under **Settings**.
 
 **Wait for hire (default).** Press **Start** on the floating bar; it turns orange (*Waiting…*).
 Nothing is tapped while waiting, so the phone works normally. The moment a button whose label exactly
-matches the configured text (default `Accept`, case-insensitive, several allowed with commas) appears
+matches the configured text (default `චාරිකාව ලබාගන්න, Accept`: PickMe's Sinhala "accept trip" button plus English; case-insensitive, several allowed with commas) appears
 in any app, InstaTap taps it once and stops.
 
 **Continuous.** Drag the red crosshair onto the spot, press **Start**, and it taps that point over
@@ -59,7 +59,7 @@ Drag the control bar by its ⠿ handle. **✕** hides the overlay; **Show overla
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | Mode | Wait for hire | Tap the named button once, or tap the target continuously |
-| Button text | Accept | Exact button label(s) to look for, comma-separated |
+| Button text | චාරිකාව ලබාගන්න, Accept | Exact button label(s) to look for, comma-separated |
 | Extra delay between taps | 0 ms | 0 taps as fast as Android accepts gestures |
 | Auto-stop after | 60 min | 0 never stops automatically |
 
